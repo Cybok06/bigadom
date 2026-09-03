@@ -1,0 +1,13 @@
+@import url("/static/css/executive-brand.css");
+
+/* Manager portal refinements shared through manager_sidebar.html. */
+body { background: var(--brand-background) !important; }
+.sidebar { animation: manager-sidebar-in .36s ease-out both; }
+.page-wrap, .main-content { animation: manager-content-in .42s ease-out both; }
+
+@keyframes manager-sidebar-in { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes manager-content-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .page-wrap, .main-content { animation: none; }
+}

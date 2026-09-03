@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Messages | Executive</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/executive-brand.css') }}" rel="stylesheet">
+  <style>
+    body { background:#f5f8f6; color:#17251e; }
+    .page-shell { margin-left:250px; min-height:100vh; }
+    .page-header { background:#fff; border-bottom:1px solid #dfe8e2; padding:1.25rem 2rem; }
+    .page-content { max-width:1180px; padding:1.5rem 2rem 3rem; }
+    .workspace { display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(300px, .65fr); gap:1.25rem; align-items:start; }
+    .editor, .preview-panel { background:#fff; border:1px solid #dfe8e2; border-radius:8px; }
+    .editor { overflow:hidden; }
+    .editor-head, .editor-body, .preview-panel { padding:1.25rem; }
+    .editor-head { border-bottom:1px solid #e6ece8; }
+    .type-tabs { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .type-tab { border:1px solid #cad8cf; background:#fff; color:#405148; padding:.58rem .9rem; border-radius:6px; font-weight:700; }
+    .type-tab.active { background:#0b4d3a; border-color:#0b4d3a; color:#fff; }
+    .template-pane { display:none; }
+    .template-pane.active { display:block; }
+    .message-input { min-height:190px; resize:vertical; border-color:#bfcfc5; line-height:1.6; }
+    .message-input:focus { border-color:#0b6b50; box-shadow:0 0 0 .2rem rgba(11,107,80,.12); }
+    .token-grid { display:flex; flex-wrap:wrap; gap:.5rem; }
+    .token-btn { display:inline-flex; align-items:center; gap:.35rem; border:1px solid #bfd4c7; background:#f4faf6; color:#075d45; border-radius:6px; padding:.42rem .62rem; font-size:.79rem; font-weight:700; }
+    .token-btn:hover { background:#e5f4ea; border-color:#79ab8e; }
+    .phone { background:#16221c; border:7px solid #26372e; border-radius:22px; padding:.7rem; max-width:320px; margin:auto; box-shadow:0 16px 35px rgba(6,55,41,.16); }
+    .phone-screen { background:#eef4f0; min-height:330px; border-radius:13px; padding:1rem; }
+    .sms-bubble { background:#fff; border-radius:4px 12px 12px 12px; padding:.85rem; font-size:.9rem; line-height:1.5; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow-wrap:anywhere; }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:#1f9d62; display:inline-block; }
+    .save-bar { display:flex; justify-content:space-between; gap:1rem; align-items:center; border-top:1px solid #e6ece8; padding:1rem 1.25rem; background:#fbfcfb; }
+    .btn-save { background:#0b4d3a; color:#fff; border:0; border-radius:6px; padding:.65rem 1rem; font-weight:700; }
+    .btn-save:hover { background:#063729; color:#fff; }
+    .helper { color:#64746b; font-size:.84rem; }
+    .toast-note { min-height:1.3rem; font-size:.87rem; font-weight:600; }
+    .delivery-log { margin-top:1.25rem; background:#fff; border:1px solid #dfe8e2; border-radius:8px; overflow:hidden; }
+    .delivery-log-head { padding:1rem 1.25rem; border-bottom:1px solid #e6ece8; }
+    .metric-chip { display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .55rem; border-radius:6px; font-size:.76rem; font-weight:700; }
+    .recipient-summary { background:#eef7f1; border:1px solid #cbe2d2; border-radius:6px; padding:.85rem 1rem; }
+    @media (max-width: 900px) { .workspace { grid-template-columns:1fr; } .preview-panel { order:-1; } .phone-screen { min-height:230px; } }
+    @media (max-width: 768px) { .page-shell { margin-left:0; } .page-header { padding:1rem 1rem 1rem 4rem; } .page-content { padding:1rem; } .save-bar { align-items:stretch; flex-direction:column; } .btn-save { width:100%; } }
+  </style>
+</head>
+<body>
+  {% include 'executive_sidebar.html' %}
+  <main class="page-shell">
+    <header class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <div class="text-uppercase fw-bold small mb-1" style="color:#8a6f24;letter-spacing:.08em;">Communication settings</div>
+        <h1 class="h3 fw-bold mb-1">Payment Messages</h1>
+        <p class="text-secondary mb-0">Control the SMS customers receive after Product, SUSU, and Loan payments.</p>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2 small {{ 'text-success' if sms_gateway.configured else 'text-danger' }}"><span class="status-dot"{% if not sms_gateway.configured %} style="background:#b42318"{% endif %}></span> VireSender {{ sms_gateway.sender_id }} · {{ 'Ready' if sms_gateway.configured else 'API key required' }}</div>
+        <button class="btn btn-save" data-bs-toggle="modal" data-bs-target="#deliveryModal"><i class="bi bi-send me-2"></i>Deliver Message</button>
+      </div>
+    </header>
+
+    <section class="page-content">
+      <div class="workspace">
+        <div class="editor">
+          <div class="editor-head">
+            <div class="type-tabs" role="tablist" aria-label="Payment message type">
+              {% for type in template_types %}
+              <button type="button" class="type-tab{% if loop.first %} active{% endif %}" data-type="{{ type }}" role="tab" aria-selected="{{ 'true' if loop.first else 'false' }}">
+                <i class="bi {{ 'bi-box-seam' if type == 'PRODUCT' else 'bi-piggy-bank' if type == 'SUSU' else 'bi-bank' }} me-1"></i>{{ type.title() }}
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+
+          {% for type in template_types %}
+          <div class="template-pane{% if loop.first %} active{% endif %}" data-pane="{{ type }}">
+            <div class="editor-body">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div>
+                  <h2 class="h6 fw-bold mb-1">{{ type.title() }} payment SMS</h2>
+                  <div class="helper">Sent when an agent records this payment type with SMS enabled.</div>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input enabled-toggle" type="checkbox" role="switch" id="enabled{{ type }}" data-type="{{ type }}" {% if templates[type].enabled %}checked{% endif %}>
+                  <label class="form-check-label fw-semibold" for="enabled{{ type }}">Enabled</label>
+                </div>
+              </div>
+
+              <label class="form-label fw-semibold" for="message{{ type }}">Message</label>
+              <textarea class="form-control message-input" id="message{{ type }}" data-type="{{ type }}" maxlength="1000">{{ templates[type].message }}</textarea>
+              <div class="d-flex justify-content-between mt-2 helper"><span>Click a placeholder to insert it at the cursor.</span><span><strong class="char-count">0</strong> characters</span></div>
+
+              <div class="mt-4">
+                <div class="fw-semibold mb-2">Customer and payment placeholders</div>
+                <div class="token-grid">
+                  {% for key, label in placeholders.items() %}
+                  <button type="button" class="token-btn" data-token="{{ key }}" title="{{ label }}"><i class="bi bi-plus-lg"></i>&#123;{{ key }}&#125;</button>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+
+          <div class="save-bar">
+            <div><div id="saveStatus" class="toast-note"></div><div class="helper">Changes apply to the next payment SMS.</div></div>
+            <button type="button" id="saveButton" class="btn btn-save"><i class="bi bi-check2-circle me-2"></i>Save Messages</button>
+          </div>
+        </div>
+
+        <aside class="preview-panel">
+          <div class="d-flex align-items-center justify-content-between mb-3"><h2 class="h6 fw-bold mb-0">Customer preview</h2><span class="badge text-bg-light border">SMS</span></div>
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="small text-center text-secondary fw-semibold mb-3">SMARTLIVING</div>
+              <div id="previewMessage" class="sms-bubble"></div>
+              <div class="text-secondary mt-2" style="font-size:.7rem;">Now &middot; Delivered</div>
+            </div>
+          </div>
+          <div class="helper mt-3"><i class="bi bi-info-circle me-1"></i>Preview values are examples. Live customer and payment data are inserted when the payment is saved.</div>
+        </aside>
+      </div>
+
+      <section class="delivery-log">
+        <div class="delivery-log-head d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div><h2 class="h6 fw-bold mb-1">Delivery Logs</h2><div class="helper">A permanent summary of executive broadcast deliveries.</div></div>
+          <span class="badge text-bg-light border" id="logCount">{{ delivery_logs|length }} recent</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light"><tr><th class="ps-4">Delivered</th><th>Audience</th><th>Message</th><th>Recipients</th><th>Result</th><th class="pe-4">Sent by</th></tr></thead>
+            <tbody id="deliveryLogBody">
+              {% for log in delivery_logs %}
+              <tr>
+                <td class="ps-4 text-nowrap"><strong>{{ log.createdAt }}</strong></td>
+                <td><strong>{{ log.audience }}</strong><small class="d-block text-secondary">{{ log.filter }}</small></td>
+                <td style="min-width:240px;max-width:360px;"><div class="text-truncate" title="{{ log.message }}">{{ log.message }}</div></td>
+                <td>{{ log.total }}</td>
+                <td><span class="metric-chip bg-success-subtle text-success">{{ log.sent }} sent</span> <span class="metric-chip bg-danger-subtle text-danger">{{ log.failed }} failed</span> <span class="metric-chip bg-warning-subtle text-warning-emphasis">{{ log.invalid }} invalid</span></td>
+                <td class="pe-4">{{ log.createdBy }}</td>
+              </tr>
+              {% else %}
+              <tr id="emptyLogRow"><td colspan="6" class="text-center text-secondary py-5">No broadcast messages have been delivered yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal fade" id="deliveryModal" tabindex="-1" aria-labelledby="deliveryModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0" style="border-radius:8px;">
+        <div class="modal-header"><div><h2 class="modal-title h5 fw-bold" id="deliveryModalTitle">Deliver Message</h2><div class="helper">Send a targeted SMS broadcast and record its delivery totals.</div></div><button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label fw-semibold" for="broadcastAudience">Recipients</label><select id="broadcastAudience" class="form-select">{% for key, label in audiences.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+            <div class="col-md-6" id="customerFilterWrap" style="display:none;"><label class="form-label fw-semibold" for="customerFilter">Customer group</label><select id="customerFilter" class="form-select">{% for key, label in customer_filters.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+          </div>
+          <div class="recipient-summary d-flex flex-wrap justify-content-between gap-2 align-items-center mt-3"><div><strong id="recipientTotal">Checking recipients...</strong><div class="helper" id="recipientBreakdown"></div></div><button type="button" id="refreshRecipients" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button></div>
+          <div class="mt-4"><label class="form-label fw-semibold" for="broadcastMessage">Message</label><textarea id="broadcastMessage" class="form-control message-input" maxlength="1000" placeholder="Type the message recipients should receive..."></textarea><div class="d-flex justify-content-between mt-2 helper"><span>Personalize the message with a recipient placeholder.</span><span><strong id="broadcastChars">0</strong> characters</span></div></div>
+          <div class="token-grid mt-3"><button type="button" class="token-btn broadcast-token" data-token="name"><i class="bi bi-plus-lg"></i>{name}</button><button type="button" class="token-btn broadcast-token" data-token="full_name"><i class="bi bi-plus-lg"></i>{full_name}</button></div>
+          <div id="deliveryStatus" class="toast-note mt-3"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button id="deliverButton" class="btn btn-save"><i class="bi bi-send me-2"></i>Deliver Message</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (() => {
+      const examples = {
+        name: 'Ama', full_name: 'Ama Mensah', payment_amount: '20.00', payment_type: 'SUSU', payment_date: new Date().toISOString().slice(0, 10),
+        susu_total: '340.00', product_name: 'Executive Sofa Set', product_total: '2,500.00', product_paid: '1,200.00', product_amount_left: '1,300.00',
+        loan_number: 'LN-1048', loan_total: '1,500.00', loan_paid: '620.00', loan_amount_left: '880.00'
+      };
+      let activeType = 'PRODUCT';
+      const status = document.getElementById('saveStatus');
+      const preview = document.getElementById('previewMessage');
+      const activeInput = () => document.querySelector(`.message-input[data-type="${activeType}"]`);
+      const audience = document.getElementById('broadcastAudience');
+      const customerFilter = document.getElementById('customerFilter');
+      const customerFilterWrap = document.getElementById('customerFilterWrap');
+      const broadcastMessage = document.getElementById('broadcastMessage');
+      const deliveryStatus = document.getElementById('deliveryStatus');
+      let recipientCount = 0;
+
+      function renderPreview() {
+        const input = activeInput();
+        let text = input.value.replace(/\{([a-z_][a-z0-9_]*)\}/g, (_, key) => examples[key] ?? `{${key}}`);
+        preview.textContent = text || 'Your message preview will appear here.';
+        input.closest('.template-pane').querySelector('.char-count').textContent = input.value.length;
+      }
+
+      document.querySelectorAll('.type-tab').forEach(button => button.addEventListener('click', () => {
+        activeType = button.dataset.type;
+        document.querySelectorAll('.type-tab').forEach(item => { item.classList.toggle('active', item === button); item.setAttribute('aria-selected', item === button ? 'true' : 'false'); });
+        document.querySelectorAll('.template-pane').forEach(pane => pane.classList.toggle('active', pane.dataset.pane === activeType));
+        renderPreview();
+      }));
+
+      document.querySelectorAll('.message-input').forEach(input => {
+        input.addEventListener('input', renderPreview);
+        input.closest('.template-pane').querySelector('.char-count').textContent = input.value.length;
+      });
+
+      document.querySelectorAll('.token-btn').forEach(button => button.addEventListener('click', () => {
+        const input = activeInput();
+        const token = `{${button.dataset.token}}`;
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? start;
+        input.setRangeText(token, start, end, 'end');
+        input.focus();
+        input.dispatchEvent(new Event('input', { bubbles:true }));
+      }));
+
+      document.getElementById('saveButton').addEventListener('click', async event => {
+        const button = event.currentTarget;
+        const templates = {};
+        document.querySelectorAll('.message-input').forEach(input => {
+          const type = input.dataset.type;
+          templates[type] = { message:input.value, enabled:document.querySelector(`.enabled-toggle[data-type="${type}"]`).checked };
+        });
+        button.disabled = true;
+        status.className = 'toast-note text-secondary';
+        status.textContent = 'Saving...';
+        try {
+          const response = await fetch('{{ url_for("executive_messages.update_messages") }}', { method:'PUT', headers:{'Content-Type':'application/json','Accept':'application/json'}, body:JSON.stringify({ templates }) });
+          const data = await response.json();
+          if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to save messages.');
+          status.className = 'toast-note text-success';
+          status.textContent = 'Messages saved successfully.';
+        } catch (error) {
+          status.className = 'toast-note text-danger';
+          status.textContent = error.message || 'Unable to save messages.';
+        } finally { button.disabled = false; }
+      });
+
+      async function refreshRecipientCount() {
+        customerFilterWrap.style.display = audience.value === 'customers' ? 'block' : 'none';
+        document.getElementById('recipientTotal').textContent = 'Checking recipients...';
+        try {
+          const params = new URLSearchParams({ audience:audience.value, customer_filter:customerFilter.value });
+          const response = await fetch(`{{ url_for("executive_messages.audience_count") }}?${params}`, { headers:{Accept:'application/json'} });
+          const data = await response.json();
+          if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to count recipients.');
+          recipientCount = Number(data.total || 0);
+          document.getElementById('recipientTotal').textContent = `${recipientCount.toLocaleString()} recipients selected`;
+          document.getElementById('recipientBreakdown').textContent = `${Number(data.deliverable || 0).toLocaleString()} deliverable phone numbers, ${Number(data.invalid || 0).toLocaleString()} invalid`;
+        } catch (error) {
+          recipientCount = 0;
+          document.getElementById('recipientTotal').textContent = 'Recipient count unavailable';
+          document.getElementById('recipientBreakdown').textContent = error.message || '';
+        }
+      }
+
+      audience.addEventListener('change', refreshRecipientCount);
+      customerFilter.addEventListener('change', refreshRecipientCount);
+      document.getElementById('refreshRecipients').addEventListener('click', refreshRecipientCount);
+      document.getElementById('deliveryModal').addEventListener('show.bs.modal', refreshRecipientCount);
+      broadcastMessage.addEventListener('input', () => { document.getElementById('broadcastChars').textContent = broadcastMessage.value.length; });
+      document.querySelectorAll('.broadcast-token').forEach(button => button.addEventListener('click', () => {
+        const token = `{${button.dataset.token}}`, start = broadcastMessage.selectionStart ?? broadcastMessage.value.length, end = broadcastMessage.selectionEnd ?? start;
+        broadcastMessage.setRangeText(token, start, end, 'end'); broadcastMessage.focus(); broadcastMessage.dispatchEvent(new Event('input'));
+      }));
+
+      const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+      document.getElementById('deliverButton').addEventListener('click', async event => {
+        const button = event.currentTarget, message = broadcastMessage.value.trim();
+        if (!message) { deliveryStatus.className = 'toast-note mt-3 text-danger'; deliveryStatus.textContent = 'Enter a message to deliver.'; return; }
+        if (!recipientCount) { deliveryStatus.className = 'toast-note mt-3 text-danger'; deliveryStatus.textContent = 'No recipients are selected.'; return; }
+        if (!window.confirm(`Deliver this SMS to ${recipientCount.toLocaleString()} recipients?`)) return;
+        button.disabled = true; deliveryStatus.className = 'toast-note mt-3 text-secondary'; deliveryStatus.textContent = 'Delivering messages. Keep this page open...';
+        try {
+          const response = await fetch('{{ url_for("executive_messages.deliver_message") }}', { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body:JSON.stringify({ audience:audience.value, customer_filter:customerFilter.value, message }) });
+          const data = await response.json();
+          if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to deliver message.');
+          const log = data.log;
+          deliveryStatus.className = 'toast-note mt-3 text-success'; deliveryStatus.textContent = `Completed: ${log.sent} sent, ${log.failed} failed, ${log.invalid} invalid.`;
+          document.getElementById('emptyLogRow')?.remove();
+          document.getElementById('deliveryLogBody').insertAdjacentHTML('afterbegin', `<tr><td class="ps-4 text-nowrap"><strong>${escapeHtml(log.createdAt)}</strong></td><td><strong>${escapeHtml(log.audience)}</strong><small class="d-block text-secondary">${escapeHtml(log.filter)}</small></td><td style="min-width:240px;max-width:360px;"><div class="text-truncate" title="${escapeHtml(log.message)}">${escapeHtml(log.message)}</div></td><td>${Number(log.total)}</td><td><span class="metric-chip bg-success-subtle text-success">${Number(log.sent)} sent</span> <span class="metric-chip bg-danger-subtle text-danger">${Number(log.failed)} failed</span> <span class="metric-chip bg-warning-subtle text-warning-emphasis">${Number(log.invalid)} invalid</span></td><td class="pe-4">${escapeHtml(log.createdBy)}</td></tr>`);
+        } catch (error) {
+          deliveryStatus.className = 'toast-note mt-3 text-danger'; deliveryStatus.textContent = error.message || 'Unable to deliver message.';
+        } finally { button.disabled = false; }
+      });
+      renderPreview();
+    })();
+  </script>
+</body>
+</html>
