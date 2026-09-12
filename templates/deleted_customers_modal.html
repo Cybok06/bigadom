@@ -1,0 +1,88 @@
+﻿<dialog id="deletedCustomersModal" aria-labelledby="deletedCustomersTitle" style="width:min(680px,95vw);max-height:85vh;border:0;border-radius:16px;padding:24px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 id="deletedCustomersTitle" class="h5 m-0">Deleted Customers</h2>
+    <button type="button" class="btn-close" id="closeDeletedCustomers" aria-label="Close"></button>
+  </div>
+  <p class="text-muted">Restore customers with their original details and payment links.</p>
+  <form id="deletedCustomersSearch" class="d-flex gap-2 mb-3">
+    <input id="deletedCustomersQuery" class="form-control" placeholder="Search name or phone" aria-label="Search deleted customers">
+    <button class="btn btn-outline-primary" type="submit">Search</button>
+  </form>
+  <p id="deletedCustomersMessage" role="status" aria-live="polite"></p>
+  <div id="deletedCustomersRows"></div>
+  <div class="d-flex justify-content-between align-items-center mt-3">
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="deletedCustomersPrev">Previous</button>
+    <span id="deletedCustomersPage"></span>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="deletedCustomersNext">Next</button>
+  </div>
+</dialog>
+<style>#deletedCustomersModal::backdrop {background:rgba(0,0,0,.5);}</style>
+<script>
+(() => {
+  const modal = document.getElementById('deletedCustomersModal');
+  const rows = document.getElementById('deletedCustomersRows');
+  const message = document.getElementById('deletedCustomersMessage');
+  const previous = document.getElementById('deletedCustomersPrev');
+  const next = document.getElementById('deletedCustomersNext');
+  let page = 1, pages = 1, changed = false, pending;
+  async function load() {
+    if (pending) pending.abort();
+    pending = new AbortController();
+    message.textContent = 'Loading deleted customers...';
+    rows.replaceChildren();
+    previous.disabled = next.disabled = true;
+    try {
+      const url = new URL({{ url_for('customers.deleted_customers_list') | tojson }}, location.origin);
+      url.searchParams.set('page', page);
+      url.searchParams.set('search', document.getElementById('deletedCustomersQuery').value);
+      const response = await fetch(url, {signal: pending.signal, headers: {'Accept': 'application/json'}});
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || 'Unable to load deleted customers.');
+      page = data.page; pages = data.pages;
+      message.textContent = data.total ? `${data.total} deleted customer(s)` : 'No deleted customers found.';
+      document.getElementById('deletedCustomersPage').textContent = `Page ${page} of ${pages}`;
+      previous.disabled = page <= 1; next.disabled = page >= pages;
+      for (const customer of data.customers) {
+        const row = document.createElement('div');
+        row.className = 'd-flex justify-content-between align-items-center gap-3 border-bottom py-3';
+        const details = document.createElement('div');
+        const name = document.createElement('strong'); name.textContent = customer.name;
+        const phone = document.createElement('div'); phone.textContent = customer.phone; phone.className = 'text-muted';
+        details.append(name, phone);
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'btn btn-outline-success btn-sm'; button.textContent = 'Restore';
+        button.addEventListener('click', async () => {
+          if (!confirm(`Restore ${customer.name} to Customers?`)) return;
+          button.disabled = true;
+          try {
+            const url = {{ url_for('customers.restore_deleted_customer', customer_id='__ID__') | tojson }}.replace('__ID__', encodeURIComponent(customer.id));
+            const response = await fetch(url, {method: 'POST', headers: {'Accept': 'application/json'}});
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.message || 'Unable to restore customer.');
+            changed = true;
+            document.dispatchEvent(new Event('customer-restored'));
+            await load();
+            message.textContent = result.message;
+          } catch (error) {
+            message.textContent = error.message || 'Unable to restore customer. Please try again.';
+            button.disabled = false;
+          }
+        });
+        row.append(details, button); rows.append(row);
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') message.textContent = error.message || 'Unable to load deleted customers.';
+    }
+  }
+  document.getElementById('openDeletedCustomers').addEventListener('click', () => {page = 1; modal.showModal(); load();});
+  document.getElementById('closeDeletedCustomers').addEventListener('click', () => modal.close());
+  modal.addEventListener('close', () => {
+    {% if request.endpoint == 'executive_customers.executive_customers_list' %}
+    if (changed) location.reload();
+    {% endif %}
+  });
+  document.getElementById('deletedCustomersSearch').addEventListener('submit', event => {event.preventDefault(); page = 1; load();});
+  previous.addEventListener('click', () => {if (page > 1) {page--; load();}});
+  next.addEventListener('click', () => {if (page < pages) {page++; load();}});
+})();
+</script>

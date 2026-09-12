@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in | Big Adom Enterprise</title>
+  <meta name="theme-color" content="#0b4d3a" />
+  {% include 'partials/app_install_meta.html' %}
+
+  <!-- Icons -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+ 
+  <!-- Font -->
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800;900&display=swap">
+
+  <style>
+    :root {
+      --brand-green: #0b4d3a;
+      --brand-green-dark: #063729;
+      --brand-gold: #b38a2e;
+      --brand-gold-soft: #f3ead2;
+      --background: #f8f7f1;
+      --surface: #ffffff;
+      --text-primary: #17221e;
+      --text-muted: #68736d;
+      --border-color: #dbe1dc;
+      --danger-bg: #fff2f2;
+      --danger-ink: #9a2929;
+      --danger-border: #f2cdcd;
+      --success-bg: #edf8f1;
+      --success-ink: #14633d;
+      --success-border: #cce8d6;
+    }
+
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; color: var(--text-primary); font-family: "Raleway", system-ui, sans-serif; background: var(--background); overflow-x: hidden; }
+    body::before, body::after { content: ""; position: fixed; width: 42vw; height: 42vw; max-width: 620px; max-height: 620px; border-radius: 50%; filter: blur(12px); pointer-events: none; z-index: -1; }
+    body::before { top: -23vw; left: -15vw; background: rgba(11, 77, 58, .07); }
+    body::after { right: -18vw; bottom: -25vw; background: rgba(179, 138, 46, .10); }
+
+    .login-shell { width: min(1040px, calc(100% - 40px)); min-height: 590px; margin: 40px auto; display: grid; grid-template-columns: minmax(350px, 42%) minmax(0, 58%); overflow: hidden; background: var(--surface); border: 1px solid rgba(11, 77, 58, .10); border-radius: 24px; box-shadow: 0 28px 72px rgba(6, 55, 41, .13); }
+    .brand-panel { position: relative; display: flex; flex-direction: column; justify-content: center; padding: 56px 50px; overflow: hidden; color: #fff; background: var(--brand-green); animation: reveal-left .8s cubic-bezier(.22,.61,.36,1) both; }
+    .brand-panel::before { content: ""; position: absolute; right: -100px; bottom: -130px; width: 340px; height: 340px; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; box-shadow: 0 0 0 36px rgba(255,255,255,.04), 0 0 0 73px rgba(179,138,46,.12); }
+    .brand-panel::after { content: ""; position: absolute; top: 0; right: 0; width: 110px; height: 5px; background: var(--brand-gold); }
+    .brand-content { position: relative; z-index: 1; }
+    .brand-logo { display: block; width: min(100%, 285px); height: auto; filter: drop-shadow(0 10px 22px rgba(0,0,0,.12)); animation: logo-in .72s .14s cubic-bezier(.22,.61,.36,1) both; }
+    .brand-message { max-width: 270px; margin: 46px 0 0; }
+    .brand-message h1 { margin: 0 0 12px; font-size: clamp(1.7rem, 3vw, 2.25rem); line-height: 1.12; letter-spacing: -.04em; }
+    .brand-message p { margin: 0; color: rgba(255,255,255,.76); font-size: .96rem; line-height: 1.7; }
+    .brand-rule { width: 48px; height: 3px; margin-top: 28px; background: var(--brand-gold); }
+
+    .decor { position: absolute; z-index: 0; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; color: rgba(255,255,255,.16); pointer-events: none; animation: drift 14s ease-in-out infinite alternate; }
+    .decor i { font-size: 1.1rem; }
+    .decor-1 { top: 12%; right: 12%; width: 52px; height: 52px; animation-duration: 15s; }
+    .decor-2 { top: 35%; left: 9%; width: 34px; height: 34px; animation-delay: -5s; animation-duration: 11s; }
+    .decor-3 { right: 18%; bottom: 18%; width: 68px; height: 68px; animation-delay: -7s; animation-duration: 17s; }
+    .decor-4 { bottom: 8%; left: 23%; width: 42px; height: 42px; animation-delay: -3s; animation-duration: 12s; }
+    .decor-5 { top: 62%; right: 4%; width: 28px; height: 28px; animation-delay: -9s; animation-duration: 18s; }
+    .decor-6 { top: 18%; left: 32%; width: 18px; height: 18px; border-color: rgba(179,138,46,.42); background: rgba(179,138,46,.22); animation-delay: -2s; animation-duration: 10s; }
+
+    .form-panel { display: flex; align-items: center; justify-content: center; padding: 54px clamp(32px, 6vw, 76px); animation: reveal-right .75s .13s cubic-bezier(.22,.61,.36,1) both; }
+    .form-content { width: 100%; max-width: 420px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--brand-green); font-size: .68rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--brand-gold); }
+    .title { margin: 0; font-size: 2rem; letter-spacing: -.045em; line-height: 1.1; }
+    .sub { margin: 11px 0 30px; color: var(--text-muted); font-size: .91rem; line-height: 1.6; }
+    .popup-alert { display: flex; gap: 10px; margin: 0 0 20px; padding: 12px 14px; border-radius: 12px; font-size: .8rem; line-height: 1.45; animation: alert-in .35s ease-out both; }
+    .popup-alert.error { color: var(--danger-ink); background: var(--danger-bg); border: 1px solid var(--danger-border); }
+    .popup-alert.success { color: var(--success-ink); background: var(--success-bg); border: 1px solid var(--success-border); }
+    .popup-alert i { padding-top: 2px; }
+
+    .field { margin-bottom: 18px; }
+    .label { display: block; margin-bottom: 8px; color: #52605a; font-size: .68rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    .inputwrap { position: relative; }
+    .field-icon { position: absolute; top: 50%; left: 15px; color: var(--brand-green); font-size: .9rem; pointer-events: none; transform: translateY(-50%); }
+    .input { width: 100%; min-height: 49px; padding: 12px 16px 12px 42px; color: var(--text-primary); background: #fff; border: 1px solid var(--border-color); border-radius: 13px; outline: none; font: inherit; font-size: .9rem; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+    .input::placeholder { color: #9aa39e; }
+    .input:focus { border-color: var(--brand-green); box-shadow: 0 0 0 4px rgba(11,77,58,.10), inset 3px 0 0 var(--brand-gold); transform: translateY(-1px); }
+    .has-toggle .input { padding-right: 48px; }
+    .password-toggle { position: absolute; top: 50%; right: 8px; display: grid; width: 34px; height: 34px; place-items: center; padding: 0; color: #67736c; background: transparent; border: 0; border-radius: 8px; cursor: pointer; transform: translateY(-50%); transition: color .18s ease, background .18s ease; }
+    .password-toggle i { transition: transform .18s ease, opacity .18s ease; }
+    .password-toggle:hover { color: var(--brand-green); background: var(--brand-gold-soft); }
+    .password-toggle:active i { transform: scale(.84); }
+    .password-toggle:focus-visible { outline: 2px solid var(--brand-gold); outline-offset: 2px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 3px 0 26px; color: var(--text-muted); font-size: .78rem; }
+    .remember { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+    .remember input { width: 15px; height: 15px; margin: 0; accent-color: var(--brand-green); cursor: pointer; }
+    .forgot { position: relative; color: var(--brand-green); font-weight: 800; text-decoration: none; }
+    .forgot::after { content: ""; position: absolute; right: 0; bottom: -3px; left: 0; height: 1px; background: var(--brand-gold); transform: scaleX(0); transform-origin: right; transition: transform .2s ease; }
+    .forgot:hover::after, .forgot:focus-visible::after { transform: scaleX(1); transform-origin: left; }
+    .actions { margin-top: 0; }
+    .btn { display: inline-flex; width: 100%; min-height: 50px; align-items: center; justify-content: center; gap: 10px; color: #fff; background: var(--brand-green); border: 0; border-radius: 13px; box-shadow: 0 12px 22px rgba(6,55,41,.18); cursor: pointer; font: inherit; font-size: .82rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
+    .btn i { transition: transform .2s ease; }
+    .btn:hover { background: var(--brand-green-dark); box-shadow: inset 0 -2px 0 var(--brand-gold), 0 15px 28px rgba(6,55,41,.23); transform: translateY(-1px); }
+    .btn:hover i { transform: translateX(4px); }
+    .btn:active { transform: translateY(0); }
+    .security-note { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 22px; color: #8a948f; font-size: .71rem; }
+    .security-note i { color: var(--brand-gold); }
+    .loc-status { display: none; }
+
+    #spinnerOverlay { position: fixed; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; background: rgba(6,55,41,.48); backdrop-filter: blur(4px); }
+    .loading-dialog { display: flex; min-width: 190px; flex-direction: column; align-items: center; gap: 14px; padding: 26px 30px; color: #fff; background: var(--brand-green-dark); border: 1px solid rgba(255,255,255,.16); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+    .spinner { width: 42px; height: 42px; border: 4px solid rgba(255,255,255,.28); border-top-color: var(--brand-gold); border-radius: 50%; background: transparent; animation: spin .8s linear infinite; }
+    .loading-dialog span { font-size: .82rem; font-weight: 700; letter-spacing: .04em; }
+    .btn:disabled { cursor: wait; opacity: .76; transform: none; }
+    .toast { position: fixed; bottom: 18px; left: 50%; z-index: 30; display: flex; gap: 10px; width: min(420px, calc(100% - 32px)); padding: 12px 14px; color: #fff; background: #17221e; border-radius: 12px; box-shadow: 0 18px 42px rgba(0,0,0,.2); opacity: 0; pointer-events: none; transform: translate(-50%, 10px); transition: opacity .18s ease, transform .18s ease; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast i { color: var(--brand-gold); }
+    .toast .t-title { font-size: .8rem; font-weight: 800; }
+    .toast .t-sub { margin-top: 2px; font-size: .75rem; line-height: 1.35; opacity: .82; }
+
+    @keyframes reveal-left { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes reveal-right { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes logo-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+    @keyframes alert-in { from { opacity: 0; transform: translateY(-7px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes drift { from { transform: translate3d(-5px, -8px, 0) rotate(-4deg); } to { transform: translate3d(7px, 10px, 0) rotate(5deg); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 760px) {
+      body { background: #fbfaf6; }
+      .login-shell { width: min(100% - 28px, 520px); min-height: 0; grid-template-columns: 1fr; margin: 14px auto; border-radius: 20px; }
+      .brand-panel { min-height: 230px; padding: 30px 30px 34px; justify-content: flex-end; }
+      .brand-logo { width: min(230px, 72%); }
+      .brand-message { margin-top: 22px; }
+      .brand-message h1 { font-size: 1.45rem; }
+      .brand-message p { font-size: .84rem; }
+      .brand-rule { margin-top: 18px; }
+      .decor-3, .decor-4, .decor-5 { display: none; }
+      .form-panel { padding: 34px 26px 36px; }
+    }
+    @media (max-width: 380px) { .login-shell { width: calc(100% - 20px); } .brand-panel { padding: 27px 22px 30px; } .form-panel { padding: 30px 20px; } .row { align-items: flex-start; flex-direction: column; gap: 10px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+
+<body>
+  <div id="spinnerOverlay" role="status" aria-live="polite" aria-label="Signing in">
+    <div class="loading-dialog"><div class="spinner" aria-hidden="true"></div><span>Signing in…</span></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" aria-live="polite" aria-atomic="true">
+    <i class="fa-solid fa-circle-info"></i>
+    <div>
+      <div class="t-title" id="toastTitle">Info</div>
+      <div class="t-sub" id="toastSub">Message</div>
+    </div>
+  </div>
+
+  <main class="login-shell">
+    <section class="brand-panel" aria-label="Big Adom Enterprise">
+      <span class="decor decor-1" aria-hidden="true"><i class="fa-solid fa-wallet"></i></span>
+      <span class="decor decor-2" aria-hidden="true"><i class="fa-solid fa-chart-line"></i></span>
+      <span class="decor decor-3" aria-hidden="true"><i class="fa-solid fa-briefcase"></i></span>
+      <span class="decor decor-4" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>
+      <span class="decor decor-5" aria-hidden="true"><i class="fa-solid fa-calculator"></i></span>
+      <span class="decor decor-6" aria-hidden="true"></span>
+      <div class="brand-content">
+        <img class="brand-logo" src="https://imagedelivery.net/h9fmMoa1o2c2P55TcWJGOg/1c73f150-83b0-47b8-b173-3cdfdb5e4400/public" alt="Big Adom Enterprise">
+        <div class="brand-message">
+          <h1>Welcome back</h1>
+          <p>Securely access your business workspace.</p>
+          <div class="brand-rule"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-panel" aria-labelledby="sign-in-title">
+      <div class="form-content">
+        <div class="eyebrow">Business workspace</div>
+        <h1 class="title" id="sign-in-title">Sign in</h1>
+        <p class="sub">Enter your username and password to continue.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="popup-alert {{ 'success' if messages[0][0] == 'success' else 'error' }}" role="alert">
+              <i class="fa-solid {{ 'fa-circle-check' if messages[0][0] == 'success' else 'fa-circle-exclamation' }}" aria-hidden="true"></i>
+              <div>
+                {% for category, message in messages %}
+                  {{ message }}{% if not loop.last %}<br>{% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login.login') }}" onsubmit="return gateLoginSubmit()">
+        <!-- Hidden geo fields -->
+        <input type="hidden" name="geo_lat" id="geo_lat">
+        <input type="hidden" name="geo_lng" id="geo_lng">
+        <input type="hidden" name="geo_accuracy" id="geo_accuracy">
+        <input type="hidden" name="geo_ts" id="geo_ts">
+        <input type="hidden" name="geo_available" id="geo_available" value="false">
+        <input type="hidden" name="geo_reason" id="geo_reason" value="Not captured">
+
+        <div class="field">
+          <label class="label" for="username">Username</label>
+          <div class="inputwrap">
+            <i class="fa-regular fa-user field-icon"></i>
+            <input class="input" type="text" id="username" name="username" placeholder="Enter your username" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="password">Password</label>
+          <div class="inputwrap has-toggle">
+            <i class="fa-solid fa-lock field-icon"></i>
+            <input class="input" type="password" id="password" name="password" placeholder="Enter your password" required>
+            <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password" aria-pressed="false" title="Show password">
+              <i class="fa-regular fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="remember">
+            <input type="checkbox" name="remember_me">
+            <span>Keep me signed in</span>
+          </label>
+          <a href="{{ url_for('auth_password_reset.forgot_password') }}" class="forgot">Forgot password?</a>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="loginBtn" class="btn">
+            <span>Log In</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <div id="locStatus" class="loc-status" role="status" aria-live="polite"></div>
+        </form>
+        <div class="security-note"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>Secure access</span></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // =============================
+    // Spinner
+    // =============================
+    function showSpinner(){
+      const overlay = document.getElementById("spinnerOverlay");
+      if (overlay) overlay.style.display = "flex";
+    }
+    function gateLoginSubmit(){
+      const loginButton = document.getElementById("loginBtn");
+      if (loginButton && loginButton.disabled) return false;
+      if (loginButton) {
+        loginButton.disabled = true;
+        loginButton.setAttribute("aria-busy", "true");
+        loginButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Signing in</span>';
+      }
+      showSpinner();
+      return true;
+    }
+
+    const passwordToggle = document.getElementById("passwordToggle");
+    const passwordInput = document.getElementById("password");
+    if (passwordToggle && passwordInput) {
+      passwordToggle.addEventListener("click", () => {
+        const isHidden = passwordInput.type === "password";
+        passwordInput.type = isHidden ? "text" : "password";
+        passwordToggle.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+        passwordToggle.setAttribute("aria-pressed", isHidden ? "true" : "false");
+        passwordToggle.title = isHidden ? "Hide password" : "Show password";
+        passwordToggle.innerHTML = isHidden
+          ? '<i class="fa-regular fa-eye-slash" aria-hidden="true"></i>'
+          : '<i class="fa-regular fa-eye" aria-hidden="true"></i>';
+      });
+    }
+
+    // =============================
+    // Toast helper
+    // =============================
+    let toastTimer = null;
+    function showToast(title, sub, ms=2600){
+      const t = document.getElementById("toast");
+      const tt = document.getElementById("toastTitle");
+      const ts = document.getElementById("toastSub");
+      if (!t || !tt || !ts) return;
+
+      tt.textContent = title || "Info";
+      ts.textContent = sub || "";
+
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove("show"), ms);
+    }
+
+    // =============================
+    // Location (AUTO capture on load)
+    // - No "getting location" / retry UI
+    // - Icon just shows: "Your location gets saved when you log in"
+    // =============================
+    function canUseLocation() {
+      const isLocalhost =
+        location.hostname === "localhost" ||
+        location.hostname === "127.0.0.1";
+      return window.isSecureContext || location.protocol === "https:" || isLocalhost;
+    }
+
+    function setHiddenGeoUnavailable(reason){
+      const availEl = document.getElementById("geo_available");
+      const reasonEl = document.getElementById("geo_reason");
+      const latEl = document.getElementById("geo_lat");
+      const lngEl = document.getElementById("geo_lng");
+      const accEl = document.getElementById("geo_accuracy");
+      const tsEl  = document.getElementById("geo_ts");
+
+      if (availEl) availEl.value = "false";
+      if (reasonEl) reasonEl.value = reason || "Not available";
+      if (latEl) latEl.value = "";
+      if (lngEl) lngEl.value = "";
+      if (accEl) accEl.value = "";
+      if (tsEl)  tsEl.value  = "";
+    }
+
+    function applyGeo(lat, lng, accuracy, ts){
+      const latEl = document.getElementById("geo_lat");
+      const lngEl = document.getElementById("geo_lng");
+      const accEl = document.getElementById("geo_accuracy");
+      const tsEl  = document.getElementById("geo_ts");
+      const availEl = document.getElementById("geo_available");
+      const reasonEl = document.getElementById("geo_reason");
+
+      if (latEl) latEl.value = lat;
+      if (lngEl) lngEl.value = lng;
+      if (accEl) accEl.value = accuracy || "";
+      if (tsEl)  tsEl.value  = ts || "";
+      if (availEl) availEl.value = "true";
+      if (reasonEl) reasonEl.value = "";
+
+      setLocIconState("ok");
+    }
+
+    function setLocIconState(state){
+      const btn = document.getElementById("locIconBtn");
+      if (!btn) return;
+      btn.classList.remove("ok", "bad");
+
+      if (state === "ok") btn.classList.add("ok");
+      else if (state === "bad") btn.classList.add("bad");
+    }
+
+    function showLocationStatus(message, state){
+      const el = document.getElementById("locStatus");
+      if (!el) return;
+      if (!message){
+        el.textContent = "";
+        el.style.display = "none";
+        el.classList.remove("ok", "bad");
+        return;
+      }
+      el.textContent = message;
+      el.style.display = "block";
+      el.classList.remove("ok", "bad");
+      if (state) el.classList.add(state);
+    }
+
+    function autoRequestGeo(){
+      // If not secure, mark unavailable (no prompt)
+      if (!canUseLocation()){
+        setHiddenGeoUnavailable("HTTPS required");
+        setLocIconState("bad");
+        showLocationStatus("Location unavailable (HTTPS required)", "bad");
+        return;
+      }
+
+      // If unsupported, mark unavailable (no prompt)
+      if (!("geolocation" in navigator)){
+        setHiddenGeoUnavailable("Geolocation unsupported");
+        setLocIconState("bad");
+        showLocationStatus("Location unavailable", "bad");
+        return;
+      }
+
+      // This will still trigger the browser permission prompt on first use.
+      // We don't show any UI text; only the browser does its own prompt.
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          applyGeo(
+            pos.coords.latitude,
+            pos.coords.longitude,
+            pos.coords.accuracy,
+            pos.timestamp
+          );
+          showLocationStatus("", "");
+        },
+        (err) => {
+          const msg = (err && err.message) ? err.message : "Permission denied";
+          setHiddenGeoUnavailable(msg);
+          setLocIconState("bad");
+          showLocationStatus("Location unavailable", "bad");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Icon tap message (as you requested)
+      const btn = document.getElementById("locIconBtn");
+      if (btn){
+        btn.addEventListener("click", () => {
+          showToast("Location", "Your location gets saved when you log in.");
+        });
+      }
+
+      // Auto-capture on page load
+      setLocIconState("neutral");
+      setHiddenGeoUnavailable("Not captured");
+      autoRequestGeo();
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+{% if loan.status == 'cancelled' %}
+<div class="alert alert-secondary" role="status" style="overflow-wrap:anywhere">
+  <h2 class="h5">Loan cancelled</h2>
+  <p class="mb-1">{{ loan.cancellation_reason or 'This loan has been cancelled.' }}</p>
+  {% if loan.cancelled_at %}<p class="small mb-1">Cancelled by {{ loan.cancelled_by_role or 'management' }} on {{ loan.cancelled_at.strftime('%d %b %Y, %H:%M') }} UTC.</p>{% endif %}
+  <p class="small mb-0">Payments and new penalties are stopped. Amounts below are retained as historical records.</p>
+</div>
+{% elif role in ['manager', 'executive'] and loan.status in ['approved', 'active', 'grace_period', 'overdue'] %}
+<div class="d-flex flex-column align-items-end gap-2 mb-3">
+  <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelLoanModal" {% if cancellation_payment_count >= 3 %}disabled aria-describedby="cancelLoanDisabledReason"{% endif %}>Cancel loan</button>
+  {% if cancellation_payment_count >= 3 %}<p class="small text-muted mb-0" id="cancelLoanDisabledReason">Cannot cancel: this loan has three or more payments.</p>{% endif %}
+</div>
+{% if cancellation_payment_count < 3 %}
+<div class="modal fade" id="cancelLoanModal" tabindex="-1" aria-labelledby="cancelLoanTitle">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+    <form class="modal-content" method="post" action="{{ url_for('loans.cancel', loan_id=loan.id) }}">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="cancelLoanTitle">Cancel loan {{ loan.loan_number }}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>This stops future payments and penalties. The agent will see the loan as cancelled, including your reason.</p>
+        <p class="text-muted small">Existing payments and disbursement records remain unchanged. Cancellation does not issue a refund.</p>
+        <input type="hidden" name="cancel_token" value="{{ session.get('loan_cancel_token', '') }}">
+        <label class="form-label" for="loanCancellationReason">Cancellation reason</label>
+        <textarea class="form-control" id="loanCancellationReason" name="reason" rows="4" maxlength="500" required></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep loan</button>
+        <button type="submit" class="btn btn-danger">Confirm cancellation</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endif %}
