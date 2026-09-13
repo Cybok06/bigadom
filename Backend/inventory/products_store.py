@@ -1570,7 +1570,7 @@ def _build_entry_rows(
                 "expiry_date": expiry_date,
                 "reminder_days": reminder_days,
                 "cost_price": cost_price,
-                "selling_price": selling_price,
+                "selling_price": str(payload.get("sellingPrice")).strip(),
                 "installment_price": float(installment_price) if installment_price is not None else None,
                 "wholesale_price": float(wholesale_price) if wholesale_price is not None else None,
                 "created_at": now,
@@ -1707,7 +1707,7 @@ def update_inventory_product(product_id: str, payload: dict[str, Any], identity:
     entries = [_normalize_entry(entry) for entry in (product_doc.get("entries") or [])]
     latest = _latest_entry(entries)
     current_selling_price = float((latest or {}).get("selling_price") or 0)
-    applied_selling_price = _average_price(current_selling_price or None, requested_selling_price)
+    applied_selling_price = requested_selling_price
     now = datetime.utcnow()
 
     updated_entries = []
@@ -1718,7 +1718,7 @@ def update_inventory_product(product_id: str, payload: dict[str, Any], identity:
                 "expiry_date": expiry_date,
                 "reminder_days": reminder_days,
                 "cost_price": cost_price,
-                "selling_price": applied_selling_price,
+                "selling_price": str(payload.get("sellingPrice")).strip(),
                 "installment_price": float(installment_price) if installment_price is not None else None,
                 "wholesale_price": float(wholesale_price) if wholesale_price is not None else None,
                 "updated_at": now,
@@ -1771,7 +1771,7 @@ def update_inventory_product(product_id: str, payload: dict[str, Any], identity:
             "old_selling_price": round(current_selling_price, 2) if current_selling_price else None,
             "requested_selling_price": round(requested_selling_price, 2),
             "new_selling_price": applied_selling_price,
-            "price_formula": "average(old_selling_price, requested_selling_price)",
+            "price_formula": "requested_selling_price",
             "updated_by": identity.get("username") or identity.get("name") or "Unknown",
             "updated_at": now,
         }

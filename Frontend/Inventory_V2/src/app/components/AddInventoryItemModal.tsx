@@ -57,7 +57,7 @@ export interface InventoryItemPayload {
   expiryDate: string;
   reminderDays: number;
   costPrice: number;
-  sellingPrice: number;
+  sellingPrice: string;
   installmentPrice: number | null;
   wholesalePrice: number | null;
   branches: string[];
@@ -409,7 +409,7 @@ export function AddInventoryItemModal({
       expiryDate,
       reminderDays: parseInt(reminderDays) || 7,
       costPrice: cost,
-      sellingPrice: sell,
+      sellingPrice: sellingPrice.trim(),
       installmentPrice: installmentPrice ? parseFloat(installmentPrice) : null,
       wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
       branches: isEditMode ? (initialItem?.branches || selectedBranches) : selectedBranches,

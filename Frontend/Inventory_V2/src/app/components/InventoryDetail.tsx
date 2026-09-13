@@ -194,6 +194,7 @@ type InventoryProductDetail = {
   reorderPoint: number;
   reorderQuantity: number;
   unitCost: number;
+  sellingPrice: number;
   status: string;
   lastRestocked: string;
   createdAt: string;
@@ -617,6 +618,7 @@ export function InventoryDetail({ itemId, onBack }: InventoryDetailProps) {
                         <h3 className="mb-4 font-semibold text-gray-900">Inventory Settings</h3>
                         <div className="space-y-3">
                           <DetailRow label="Unit Cost" value={`GHS ${product.unitCost.toLocaleString()}`} />
+                          <DetailRow label="Selling Price" value={`GHS ${product.sellingPrice.toLocaleString()}`} />
                           <DetailRow label="Reorder Point" value={`${product.reorderPoint} units`} />
                           <DetailRow label="Reorder Quantity" value={`${product.reorderQuantity} units`} />
                           <DetailRow
