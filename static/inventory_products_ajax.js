@@ -463,11 +463,11 @@
                   </div>
                   <div class="col-md-4">
                     <label class="form-label" for="cost${domId}">Cost Price</label>
-                    <input type="number" step="0.01" min="0" name="cost_price" id="cost${domId}" class="form-control" value="${formatMoney(costPrice, '')}">
+                    <input type="text" pattern="(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)" title="Enter a non-negative price, for example 20 or 20.56" inputmode="decimal" name="cost_price" id="cost${domId}" class="form-control" value="${formatMoney(costPrice, '')}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label" for="sell${domId}">Selling Price</label>
-                    <input type="number" step="0.01" min="0" name="selling_price" id="sell${domId}" class="form-control" value="${formatMoney(sellingPrice, '')}">
+                    <input type="text" pattern="(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)" title="Enter a non-negative price, for example 20 or 20.56" inputmode="decimal" name="selling_price" id="sell${domId}" class="form-control" value="${formatMoney(sellingPrice, '')}">
                   </div>
                   <div class="col-md-4">
                     <label class="form-label" for="margin${domId}">Margin</label>
