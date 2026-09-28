@@ -1,0 +1,3 @@
+﻿{% if can_edit_payments %}
+<button type="button" class="btn btn-sm btn-outline-primary ms-2" data-edit-payment="{{ payment._id }}" data-payment-amount="{{ payment.amount }}" data-payment-date="{{ payment.date }}" aria-label="Edit payment amount">Edit</button>
+{% endif %}

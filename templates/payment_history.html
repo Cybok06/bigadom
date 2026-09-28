@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment History</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f5f7f6; color:#203b32; }
+    .ph-shell { margin-left:250px; padding:76px 32px 40px; }
+    .ph-shell.ph-manager { margin-left:0; padding-left:76px; }
+    .ph-content { max-width:1400px; margin:auto; }
+    .ph-kicker { color:#62766e; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; }
+    .ph-header { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:28px; }
+    .ph-header h1 { font-size:clamp(1.65rem,3vw,2.1rem); font-weight:700; margin:6px 0; letter-spacing:-.04em; }
+    .ph-muted { color:#687a72; font-size:.88rem; }
+    .ph-scope { background:#e8f1ec; color:#17563d; border:1px solid #d5e5db; padding:8px 13px; border-radius:30px; font-size:.8rem; white-space:nowrap; }
+    .ph-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:24px; }
+    .ph-stat { background:white; border:1px solid #e0e8e3; border-radius:14px; padding:22px; }
+    .ph-stat:first-child { background:#124c37; color:white; border-color:#124c37; }
+    .ph-stat small { display:block; font-size:.78rem; opacity:.8; margin-bottom:10px; }
+    .ph-value { font-size:clamp(1.2rem,2vw,1.7rem); font-weight:700; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+    .ph-value span { font-size:.7rem; font-weight:500; margin-right:5px; }
+    .ph-panel { background:white; border:1px solid #e0e8e3; border-radius:14px; overflow:hidden; }
+    .ph-filters { padding:22px; display:grid; grid-template-columns:1fr 1.4fr 1fr auto; gap:16px; align-items:end; border-bottom:1px solid #e7ede9; }
+    .ph-filters label { font-size:.78rem; font-weight:600; margin-bottom:7px; }
+    .ph-filters .form-control,.ph-filters .form-select { min-height:43px; border-color:#d9e3dc; font-size:.88rem; }
+    .ph-actions { display:flex; gap:8px; }
+    .ph-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:43px; padding:9px 16px; border:1px solid #d9e3dc; border-radius:7px; background:white; color:#294c3d; text-decoration:none; font-size:.85rem; white-space:nowrap; }
+    .ph-button:hover { background:#edf4ef; color:#124c37; }
+    .ph-primary { background:#175b40; border-color:#175b40; color:white; }
+    .ph-primary:hover { background:#10452f; color:white; }
+    .ph-table-heading { padding:22px; display:flex; gap:12px; align-items:center; justify-content:space-between; }
+    .ph-table { width:100%; border-collapse:collapse; }
+    .ph-table th { background:#f7f9f8; padding:12px 22px; font-size:.7rem; color:#697b72; text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+    .ph-table td { padding:17px 22px; border-top:1px solid #eef2ef; font-size:.85rem; vertical-align:middle; }
+    .ph-table td:last-child,.ph-table th:last-child { text-align:right; }
+    .ph-table tbody tr:hover { background:#fbfcfb; }
+    .ph-type { display:inline-block; padding:5px 10px; border-radius:6px; font-size:.7rem; font-weight:700; }
+    .ph-type-PRODUCT { background:#edf0ff; color:#4c54a0; }
+    .ph-type-SUSU { background:#e9f5ed; color:#267145; }
+    .ph-type-LOAN { background:#fff3df; color:#906717; }
+    .ph-detail { display:block; max-width:250px; font-size:.75rem; color:#748179; margin-top:4px; overflow-wrap:anywhere; }
+    .ph-amount { font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .ph-empty { text-align:center; padding:64px 24px; }
+    .ph-empty i { font-size:2rem; color:#849d8e; }
+    .ph-footer { display:flex; justify-content:space-between; align-items:center; padding:18px 22px; border-top:1px solid #e7ede9; gap:14px; }
+    .ph-footer nav { display:flex; align-items:center; gap:12px; }
+    @media(max-width:1100px) { .ph-filters { grid-template-columns:1fr 1fr; } .ph-stats { gap:10px; } .ph-stat { padding:17px; } .ph-table td,.ph-table th { padding:14px 12px; } }
+    @media(max-width:768px) {
+      .ph-shell,.ph-shell.ph-manager { margin-left:0; padding:76px 16px 24px; }
+      .ph-header { align-items:flex-start; flex-direction:column; gap:10px; }
+      .ph-stats { grid-template-columns:1fr 1fr; }
+      .ph-filters { padding:16px; gap:12px; }
+      .ph-actions { flex-wrap:wrap; }
+      .ph-table thead { display:none; }
+      .ph-table,.ph-table tbody,.ph-table tr,.ph-table td { display:block; }
+      .ph-table tr { border-top:1px solid #e0e8e3; padding:12px 16px; }
+      .ph-table td { display:flex; justify-content:space-between; gap:18px; padding:6px 0; border:0; text-align:right; }
+      .ph-table td::before { content:attr(data-label); color:#687a72; font-size:.78rem; text-align:left; flex-shrink:0; }
+      .ph-table td > div { min-width:0; overflow-wrap:anywhere; }
+      .ph-footer { flex-direction:column; }
+      .ph-table-heading { padding:18px 16px; }
+    }
+    @media(max-width:400px) { .ph-filters { grid-template-columns:1fr; } .ph-actions .ph-button { flex:1; } }
+  </style>
+</head>
+<body>
+  {% include role ~ '_sidebar.html' %}
+  <main class="ph-shell {{ 'ph-manager' if role == 'manager' else '' }}">
+    <div class="ph-content">
+      <header class="ph-header">
+        <div><div class="ph-kicker">Collections overview</div><h1>Payment History</h1><p class="ph-muted mb-0">Review customer payments collected by {{ 'your agents' if role == 'manager' else 'all agents' }}.</p></div>
+        <div class="ph-scope"><i class="bi bi-people me-1"></i> {{ 'Your agents only' if role == 'manager' else 'All agents' }}</div>
+      </header>
+      <section class="ph-stats" aria-label="Payment totals for the selected filters">
+        <div class="ph-stat"><small>Total collected · {{ count }} payments</small><div class="ph-value"><span>GHS</span>{{ '{:,.2f}'.format(total) }}</div></div>
+        {% for kind in payment_types %}<div class="ph-stat"><small>{{ 'SUSU' if kind == 'SUSU' else kind.title() }} payments</small><div class="ph-value"><span>GHS</span>{{ '{:,.2f}'.format(totals[kind]) }}</div></div>{% endfor %}
+      </section>
+      <section class="ph-panel" aria-label="Payment records">
+        <form class="ph-filters" method="get" action="{{ url_for('payment_history.page') }}">
+          <div><label for="historyDate">Payment date</label><input class="form-control" type="date" id="historyDate" name="date" value="{{ selected_date }}" required></div>
+          <div><label for="historyAgent">Agent</label><select class="form-select" id="historyAgent" name="agent_id"><option value="">{{ 'All my agents' if role == 'manager' else 'All agents' }}</option>{% for agent in agents %}<option value="{{ agent._id }}" {% if selected_agent == agent._id|string %}selected{% endif %}>{{ agent.name or agent.username or 'Unnamed agent' }}</option>{% endfor %}</select></div>
+          <div><label for="historyType">Payment type</label><select class="form-select" id="historyType" name="payment_type"><option value="">All payment types</option>{% for kind in payment_types %}<option value="{{ kind }}" {% if selected_type == kind %}selected{% endif %}>{{ 'SUSU' if kind == 'SUSU' else kind.title() }}</option>{% endfor %}</select></div>
+          <div class="ph-actions"><button class="ph-button ph-primary" type="submit"><i class="bi bi-funnel"></i> Apply</button><a class="ph-button" href="{{ url_for('payment_history.page') }}">Reset</a></div>
+        </form>
+        <div class="ph-table-heading"><div><h2 class="h6 fw-bold mb-1">{{ 'Today’s payments' if selected_date == today else 'Payments' }}</h2><div class="ph-muted">{{ display_date }} · Ghana time</div></div><a class="ph-button" href="{{ url_for('payment_history.page', date=selected_date, agent_id=selected_agent, payment_type=selected_type) }}" aria-label="Refresh payments"><i class="bi bi-arrow-clockwise"></i> Refresh</a></div>
+        {% if rows %}
+        <table class="ph-table">
+          <caption class="visually-hidden">Payments for {{ display_date }} matching the selected agent and payment type</caption>
+          <thead><tr><th scope="col">Time</th><th scope="col">Agent</th><th scope="col">Customer</th><th scope="col">Type</th><th scope="col">Method</th><th scope="col">Amount (GHS)</th></tr></thead>
+          <tbody>{% for row in rows %}<tr>
+            <td data-label="Time"><div>{{ row.time }}</div></td>
+            <td data-label="Agent"><div class="fw-semibold">{{ row.agent }}</div></td>
+            <td data-label="Customer"><div><span class="fw-semibold">{{ row.customer }}</span>{% if row.detail %}<span class="ph-detail">{{ row.detail }}</span>{% endif %}</div></td>
+            <td data-label="Type"><div><span class="ph-type ph-type-{{ row.type }}">{{ row.type }}</span></div></td>
+            <td data-label="Method"><div>{{ row.method }}</div></td>
+            <td data-label="Amount (GHS)"><div class="ph-amount">{{ '{:,.2f}'.format(row.amount) }}</div></td>
+          </tr>{% endfor %}</tbody>
+        </table>
+        {% else %}<div class="ph-empty"><i class="bi bi-receipt"></i><h3 class="h6 mt-3 fw-bold">No payments found</h3><p class="ph-muted mb-0">{% if role == 'manager' and not agents %}No agents are currently assigned to you.{% else %}No payments match these filters. Try another date, agent, or payment type.{% endif %}</p></div>{% endif %}
+        <footer class="ph-footer"><span class="ph-muted">Showing {{ first }}–{{ last }} of {{ count }} payments</span><nav aria-label="Payment history pages">{% if previous_url %}<a class="ph-button" href="{{ previous_url }}">Previous</a>{% endif %}<span class="ph-muted">Page {{ page_number }} of {{ pages }}</span>{% if next_url %}<a class="ph-button" href="{{ next_url }}">Next</a>{% endif %}</nav></footer>
+      </section>
+      <p class="ph-muted mt-3 mb-0 small">Totals reflect the selected filters. Withdrawals are excluded.</p>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

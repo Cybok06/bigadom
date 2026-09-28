@@ -1,0 +1,50 @@
+<footer class="app-footer mt-5">
+  <div class="footer-inner">
+    <div class="brand-lockup">
+      <img
+        src="https://imagedelivery.net/h9fmMoa1o2c2P55TcWJGOg/1c73f150-83b0-47b8-b173-3cdfdb5e4400/public"
+        alt="Big Adom Enterprise"
+        class="brand-logo"
+      >
+    </div>
+  </div>
+</footer>
+
+<style>
+  .app-footer {
+    width: 100%;
+    background: #ffffff;
+    border-top: 1px solid var(--brand-border, #e5e7eb);
+    padding: 14px 12px;
+    margin-top: 40px;
+  }
+
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-logo {
+    height: 30px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  @media (max-width: 576px) {
+    .footer-inner {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+</style>

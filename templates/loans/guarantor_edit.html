@@ -1,0 +1,23 @@
+<div class="modal fade" id="guarantorEditModal" tabindex="-1" aria-labelledby="guarantorEditTitle" aria-describedby="guarantorEditHelp" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+    <form class="modal-content" id="guarantorEditForm" action="{{ url_for('loans.update_guarantor', loan_id=loan.id) }}" method="post">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="guarantorEditTitle">Edit guarantor details</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close guarantor editor"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted" id="guarantorEditHelp">Update existing details or add information such as the guarantor's name, phone, address, or relationship.</p>
+        <input type="hidden" name="guarantor_token" value="{{ session.get('guarantor_edit_token', '') }}">
+        <div id="guarantorEditError" class="alert alert-danger" role="alert" hidden></div>
+        <div id="guarantorEditRows" class="d-grid gap-3"></div>
+        <button type="button" id="guarantorAddDetail" class="btn btn-outline-primary mt-3">Add detail</button>
+      </div>
+      <div class="modal-footer flex-nowrap">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="guarantorSave">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="guarantorSaveStatus" class="visually-hidden" role="status"></div>
+<script type="application/json" id="guarantorInitialDetails">{{ (loan.guarantor_details or [])|tojson }}</script>
