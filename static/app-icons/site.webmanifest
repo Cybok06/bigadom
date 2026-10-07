@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "Big Adom Enterprise",
+  "short_name": "Big Adom",
+  "description": "Big Adom Enterprise business operations app",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#f8f7f1",
+  "theme_color": "#0b4d3a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/static/app-icons/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/app-icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/app-icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

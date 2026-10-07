@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shortage and Surplus | Big Adom</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f4f7f5; color: #20352b; font-family: system-ui, sans-serif; }
+    .page-wrap { margin-left: 250px; padding: 2rem; max-width: 1650px; }
+    .page-header { padding-left: 2rem; margin-bottom: 1.75rem; }
+    .card { border: 1px solid #dce7df; border-radius: 14px; box-shadow: 0 4px 16px rgba(6,55,41,.04); }
+    .table th { color: #637469; font-size: .8rem; background: #f8faf9; }
+    .entry-note { min-width: 150px; max-width: 320px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .btn-primary { background: #0b4d3a; border-color: #0b4d3a; }
+    .btn-primary:hover { background: #063729; border-color: #063729; }
+    .pagination .active .page-link { background: #0b4d3a; border-color: #0b4d3a; color: #fff; }
+    .page-link { color: #0b4d3a; }
+    .sidebar.collapsed ~ .page-wrap { margin-left: 0; }
+    @media (max-width: 768px) { .page-wrap { margin-left: 0; padding: 1rem; } .page-header { padding-left: 3rem; } }
+  </style>
+</head>
+<body>
+  {% include 'executive_sidebar.html' %}
+  <main class="page-wrap">
+    <header class="page-header">
+      <h1 class="h3 fw-bold mb-1">Shortage and Surplus</h1>
+      <p class="text-muted mb-0">Record cash shortages and surpluses for each agent.</p>
+    </header>
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+
+    <section class="card p-4 mb-4" aria-labelledby="entry-heading">
+      <h2 class="h5 mb-3" id="entry-heading">Record cash entry</h2>
+      <form method="POST" action="{{ url_for('executive_cash_variances.page', agent_id=agent_filter) }}">
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-4">
+            <label class="form-label" for="entry-agent">Agent</label>
+            <select class="form-select" id="entry-agent" name="agent_id" required>
+              <option value="">Select an agent</option>
+              {% for agent in agents %}
+                <option value="{{ agent.id_str }}" {% if form_values.agent_id == agent.id_str %}selected{% endif %}>{{ agent.name or agent.username or 'Unnamed agent' }}{% if agent.branch %} — {{ agent.branch }}{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 col-lg-2">
+            <label class="form-label" for="entry-type">Type</label>
+            <select class="form-select" id="entry-type" name="entry_type" required>
+              <option value="">Select type</option>
+              <option value="shortage" {% if form_values.entry_type == 'shortage' %}selected{% endif %}>Shortage</option>
+              <option value="surplus" {% if form_values.entry_type == 'surplus' %}selected{% endif %}>Surplus</option>
+            </select>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <label class="form-label" for="entry-amount">Cash amount (GHS)</label>
+            <input class="form-control" id="entry-amount" name="amount" type="number" min="0.01" max="999999999.99" step="0.01" value="{{ form_values.amount }}" placeholder="0.00" required>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <label class="form-label" for="entry-date">Entry date</label>
+            <input class="form-control" id="entry-date" name="entry_date" type="date" value="{{ form_values.entry_date }}" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="entry-note">Note <span class="text-muted">(optional)</span></label>
+            <textarea class="form-control" id="entry-note" name="note" rows="2" maxlength="1000" placeholder="Add a reason or reference">{{ form_values.note }}</textarea>
+          </div>
+          <div class="col-12"><button class="btn btn-primary" type="submit" {% if not agents %}disabled{% endif %}>Save entry</button></div>
+        </div>
+        {% if not agents %}<p class="text-muted mt-3 mb-0">No agents are available to record an entry.</p>{% endif %}
+      </form>
+    </section>
+
+    <section class="card p-4" aria-labelledby="records-heading">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h2 class="h5 mb-0" id="records-heading">Cash records <span class="badge bg-light text-dark border">{{ total_records }}</span></h2>
+        <form method="GET" class="d-flex align-items-end flex-wrap gap-2" action="{{ url_for('executive_cash_variances.page') }}">
+          <div>
+            <label class="form-label small" for="filter-agent">Filter by agent</label>
+            <select class="form-select form-select-sm" id="filter-agent" name="agent_id">
+              <option value="">All agents</option>
+              {% if agent_filter and not agents|selectattr('id_str', 'equalto', agent_filter)|list %}
+                <option value="{{ agent_filter }}" selected>{{ filter_agent_name }} (historical agent)</option>
+              {% endif %}
+              {% for agent in agents %}<option value="{{ agent.id_str }}" {% if agent_filter == agent.id_str %}selected{% endif %}>{{ agent.name or agent.username or 'Unnamed agent' }}{% if agent.branch %} — {{ agent.branch }}{% endif %}</option>{% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+          {% if agent_filter %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('executive_cash_variances.page') }}">Clear</a>{% endif %}
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th scope="col">Date</th><th scope="col">Agent</th><th scope="col">Type</th><th scope="col" class="text-end">Amount (GHS)</th><th scope="col">Note</th><th scope="col">Recorded by</th></tr></thead>
+          <tbody>
+            {% for record in records %}
+              <tr>
+                <td class="text-nowrap">{{ record.entry_date }}</td>
+                <td>{{ record.agent_name }}</td>
+                <td><span class="badge {{ 'bg-danger' if record.entry_type == 'shortage' else 'bg-success' }}">{{ record.entry_type|title }}</span></td>
+                <td class="text-end text-nowrap fw-semibold">{{ '{:,.2f}'.format(record.amount) }}</td>
+                <td class="entry-note">{{ record.note or '—' }}</td>
+                <td>{{ record.recorded_by_name }}</td>
+              </tr>
+            {% else %}<tr><td colspan="6" class="text-center text-muted py-5">No cash records{% if agent_filter %} for this agent{% endif %} yet.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="small text-muted">Page {{ current_page }} of {{ total_pages }} · {{ total_records }} record{{ '' if total_records == 1 else 's' }}</span>
+        {% if total_pages > 1 %}
+          <nav aria-label="Cash records pages"><ul class="pagination pagination-sm mb-0">
+            {% if current_page > 1 %}<li class="page-item"><a class="page-link" href="{{ url_for('executive_cash_variances.page', agent_id=agent_filter, page=current_page - 1) }}">Previous</a></li>{% endif %}
+            {% for page_number in page_numbers %}<li class="page-item {{ 'active' if page_number == current_page else '' }}"><a class="page-link" {% if page_number == current_page %}aria-current="page"{% endif %} href="{{ url_for('executive_cash_variances.page', agent_id=agent_filter, page=page_number) }}">{{ page_number }}</a></li>{% endfor %}
+            {% if current_page < total_pages %}<li class="page-item"><a class="page-link" href="{{ url_for('executive_cash_variances.page', agent_id=agent_filter, page=current_page + 1) }}">Next</a></li>{% endif %}
+          </ul></nav>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

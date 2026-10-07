@@ -1,0 +1,36 @@
+﻿{% if can_edit_payments %}
+<dialog id="paymentEditDialog" aria-labelledby="paymentEditTitle" style="width:min(460px,95vw);border:0;border-radius:16px;padding:24px;">
+<form id="paymentEditForm"><div class="d-flex justify-content-between align-items-center"><h2 class="h5" id="paymentEditTitle">Edit payment amount</h2><button type="button" class="btn-close" id="paymentEditClose" aria-label="Close"></button></div>
+<p id="paymentEditSummary" class="text-muted mt-3"></p>
+<label for="paymentEditAmount" class="form-label">Correct amount (GHS)</label><input id="paymentEditAmount" name="amount" type="number" min="0.01" max="999999999.99" step="0.01" required class="form-control">
+<p class="small text-muted mt-2">The difference will adjust the agent's unclosed money. The payment date stays unchanged.</p>
+<p id="paymentEditError" class="text-danger" role="alert"></p>
+<button type="submit" class="btn btn-primary w-100" id="paymentEditSave">Save correction</button></form></dialog>
+<style>#paymentEditDialog::backdrop{background:rgba(0,0,0,.5)}</style>
+<script>
+(() => {
+ const dialog=document.getElementById('paymentEditDialog'), form=document.getElementById('paymentEditForm'), input=document.getElementById('paymentEditAmount'), error=document.getElementById('paymentEditError'), save=document.getElementById('paymentEditSave'), close=document.getElementById('paymentEditClose');
+ let paymentId, original, busy=false;
+ document.addEventListener('click', event => {
+   const button=event.target.closest('[data-edit-payment]'); if(!button || busy) return;
+   paymentId=button.dataset.editPayment; original=button.dataset.paymentAmount;
+   input.value=Number(original).toFixed(2); error.textContent='';
+   document.getElementById('paymentEditSummary').textContent=`Payment on ${button.dataset.paymentDate}: GHS ${Number(original).toFixed(2)}`;
+   dialog.showModal(); input.focus();
+ });
+ close.addEventListener('click',()=>{if(!busy) dialog.close();});
+ dialog.addEventListener('cancel',event=>{if(busy) event.preventDefault();});
+ form.addEventListener('submit',async event=>{
+   event.preventDefault(); if(busy || !form.reportValidity()) return;
+   if(!confirm(`Change this payment from GHS ${Number(original).toFixed(2)} to GHS ${Number(input.value).toFixed(2)}?`)) return;
+   busy=true; save.disabled=true; close.disabled=true; error.textContent='';
+   try{
+     const url={{ url_for('changes.edit_payment_amount',payment_id='__ID__')|tojson }}.replace('__ID__',encodeURIComponent(paymentId));
+     const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-Payment-Edit-Token':{{ payment_edit_token|tojson }}},body:JSON.stringify({amount:input.value,expected_amount:original})});
+     const data=await response.json(); if(!response.ok || !data.ok) throw new Error(data.message || 'Unable to save correction.');
+     location.reload();
+   }catch(e){error.textContent=e.message || 'Unable to save correction. Please retry.';busy=false;save.disabled=false;close.disabled=false;}
+ });
+})();
+</script>
+{% endif %}
