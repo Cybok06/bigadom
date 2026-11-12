@@ -5,6 +5,7 @@ from typing import Optional, Set, List, Dict, Any
 
 from flask import (
     Blueprint,
+    current_app,
     render_template,
     request,
     jsonify,
@@ -16,6 +17,7 @@ from bson import ObjectId
 
 from db import db
 from services.activity_audit import audit_action
+from services.customer_transfers import transfer_customers
 
 transfer_customer_bp = Blueprint(
     "transfer_customer", __name__, url_prefix="/transfer-customers"
@@ -340,6 +342,7 @@ def run_transfer():
           finds all customers where agent_id == from_agent_id (string or ObjectId).
       - Updates agent_id to to_agent_id.
       - Also aligns manager_id to the destination agent's manager_id.
+      - Transfers pending and active loans in the same transaction.
       - Respects manager restrictions: manager can only move between agents under them.
       - Returns counts for UI (for progress + confirmation).
       - Logs each transfer with customer names + phone numbers.
@@ -355,7 +358,7 @@ def run_transfer():
 
     raw_customer_ids = payload.get("customer_ids") or []
     if not isinstance(raw_customer_ids, list):
-        raw_customer_ids = []
+        return jsonify(ok=False, message="Invalid customer selection. Reload and try again."), 400
 
     if not from_agent_id or not to_agent_id:
         return jsonify(ok=False, message="Both from_agent_id and to_agent_id are required"), 400
@@ -391,8 +394,9 @@ def run_transfer():
     customer_oids: List[ObjectId] = []
     for cid in raw_customer_ids:
         oid = _safe_oid(cid)
-        if oid:
-            customer_oids.append(oid)
+        if not oid:
+            return jsonify(ok=False, message="Invalid customer selection. Reload and try again."), 400
+        customer_oids.append(oid)
 
     # Filter for customers to be moved (agent_id may be stored as string or ObjectId)
     agent_match_or = [{"agent_id": from_agent_id}]
@@ -463,61 +467,21 @@ def run_transfer():
             message="No customers found for the selected criteria (agent / selection).",
         )
 
-    # Fetch customers BEFORE update so logs capture correct ids/names/phones
-    customers_for_log_cursor = customers_col.find(
-        match_filter,
-        {
-            "name": 1,
-            "phone_number": 1,
-            "location": 1,
-            "occupation": 1,
-        },
-    )
-    customers_for_log: List[Dict[str, Any]] = []
-    for c in customers_for_log_cursor:
-        customers_for_log.append(
-            {
-                "id": str(c["_id"]),
-                "name": c.get("name", ""),
-                "phone_number": c.get("phone_number", ""),
-                "location": c.get("location", ""),
-                "occupation": c.get("occupation", ""),
-            }
-        )
-
-    update_doc: Dict[str, Any] = {
-        "$set": {
-            "agent_id": to_agent_id,
-        }
-    }
-    # Also align manager_id with destination agent's manager (if any)
-    if dest_mgr_id:
-        update_doc["$set"]["manager_id"] = dest_mgr_id
-
-    result = customers_col.update_many(match_filter, update_doc)
-    updated_count = result.modified_count
-
-    # Small audit log (non-blocking) – with full customer info
     try:
-        transfer_logs_col.insert_one(
-            {
-                "from_agent_id": from_agent_id,
-                "from_agent_name": from_agent.get("name", ""),
-                "to_agent_id": to_agent_id,
-                "to_agent_name": to_agent.get("name", ""),
-                "customer_ids": raw_customer_ids,  # raw list passed in
-                "customers": customers_for_log,    # full list actually affected (name + phone)
-                "total_customers": total_customers,
-                "selection_count": selection_count,
-                "updated_customers": updated_count,
-                "performed_by_role": role,
-                "performed_by_id": user_id,
-                "performed_at": datetime.utcnow(),
-            }
-        )
+        counts = transfer_customers(db, match_filter, to_agent_id, dest_mgr_id, {
+            "from_agent_id": from_agent_id,
+            "from_agent_name": from_agent.get("name", ""),
+            "to_agent_id": to_agent_id,
+            "to_agent_name": to_agent.get("name", ""),
+            "customer_ids": raw_customer_ids,
+            "selection_count": selection_count,
+            "performed_by_role": role,
+            "performed_by_id": user_id,
+        })
     except Exception:
-        # Logging failure should not break the main operation
-        pass
+        current_app.logger.exception("Customer and loan transfer failed")
+        return jsonify(ok=False, message="Transfer could not be completed. Reload and try again."), 503
+    updated_count = counts["updated_customers"]
 
     return jsonify(
         ok=True,
@@ -525,6 +489,7 @@ def run_transfer():
         total_customers=total_customers,
         selection_count=selection_count,
         updated_customers=updated_count,
+        updated_loans=counts["updated_loans"],
         from_agent={
             "id": from_agent_id,
             "name": from_agent.get("name", ""),
